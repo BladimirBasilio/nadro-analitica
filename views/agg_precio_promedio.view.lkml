@@ -41,4 +41,9 @@ view: agg_precio_promedio {
     type: count
     drill_fields: []
   }
+
+  dimension: llave {
+    type: string
+    sql: CONCAT(${anio}."-",${mes},${id_producto}) ;;
+  }
 }

@@ -57,6 +57,11 @@ view: ventas_r {
     sql: ${TABLE}.TOT_1S ;;
   }
 
+  dimension: llave_producto_pp {
+    type: string
+    sql: CONCAT(${bill_month},${material}) ;;
+  }
+
   measure: count {
     type: count
     drill_fields: []
