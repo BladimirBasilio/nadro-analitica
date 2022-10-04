@@ -2,9 +2,9 @@ view: agg_precio_promedio {
   sql_table_name: `nadro_info_plata.agg_precio_promedio`
     ;;
 
-  dimension: anio {
-    type: number
-    sql: ${TABLE}.ANIO ;;
+  dimension: anio_mes {
+    type: string
+    sql: ${TABLE}.ANIO_MES ;;
   }
 
   dimension: desc_producto {
@@ -17,10 +17,6 @@ view: agg_precio_promedio {
     sql: ${TABLE}.ID_PRODUCTO ;;
   }
 
-  dimension: mes {
-    type: number
-    sql: ${TABLE}.MES ;;
-  }
 
   dimension: precio_promedio {
     type: number
@@ -44,6 +40,23 @@ view: agg_precio_promedio {
 
   dimension: llave {
     type: string
-    sql: CONCAT(${anio}."-",${mes},${id_producto}) ;;
+    sql: CONCAT(${anio_mes},${id_producto}) ;;
+  }
+
+  measure: sum_piezas {
+    type: sum
+    sql: ${total_piezas} ;;
+  }
+
+  measure: sum_venta {
+    type: sum
+    value_format_name: decimal_2
+    sql: ${total_venta} ;;
+  }
+
+  measure: avg_precio_promedio {
+    type: average
+    value_format_name: decimal_2
+    sql: ${precio_promedio} ;;
   }
 }

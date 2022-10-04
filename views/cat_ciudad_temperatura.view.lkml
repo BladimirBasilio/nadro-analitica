@@ -31,4 +31,9 @@ view: cat_ciudad_temperatura {
     type: count
     drill_fields: []
   }
+
+  measure: avg_temp_media {
+    type: average
+    sql: ${temperatura_media} ;;
+  }
 }

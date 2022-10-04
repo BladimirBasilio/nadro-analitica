@@ -33,4 +33,22 @@ explore: ventas_r {
     type: left_outer
   }
 
+  join: agg_precio_promedio {
+    sql_on: ${ventas_r.llave_producto_pp} = ${agg_precio_promedio.llave} ;;
+    relationship: many_to_one
+    type: left_outer
+  }
+
+  join: cat_ciudad_distancia {
+    sql_on: ${cat_planta.id_ciudad} = ${cat_ciudad_distancia.id_ciudad} ;;
+    relationship: many_to_one
+    type: left_outer
+  }
+
+  join: cat_ciudad_temperatura {
+    sql_on: ${cat_planta.id_ciudad} = ${cat_ciudad_temperatura.id_ciudad};;
+    relationship: many_to_many
+    type: left_outer
+  }
+
 }

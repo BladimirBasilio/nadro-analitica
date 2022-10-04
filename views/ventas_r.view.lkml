@@ -66,4 +66,19 @@ view: ventas_r {
     type: count
     drill_fields: []
   }
+
+  measure: sum_piezas {
+    type: sum
+    sql: ${piezas} ;;
+  }
+
+  measure: sum_net_val {
+    type: sum
+    sql: ${net_val_s} ;;
+  }
+
+  measure: sum_tot_1s {
+    type: sum
+    sql: ${tot_1_s} ;;
+  }
 }
