@@ -28,8 +28,8 @@ view: cat_planta {
   }
 
   dimension: id_sucursal {
-    type: number
-    sql: ${TABLE}.ID_SUCURSAL ;;
+    type: string
+    sql: CAST(${TABLE}.ID_SUCURSAL AS STRING) ;;
   }
 
   dimension: latitud {

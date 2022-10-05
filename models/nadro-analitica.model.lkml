@@ -33,6 +33,12 @@ explore: ventas_r {
     type: left_outer
   }
 
+  join: cat_producto {
+    sql_on: ${ventas_r.material} = ${cat_producto.id_producto} ;;
+    relationship: many_to_one
+    type: left_outer
+  }
+
   join: agg_precio_promedio {
     sql_on: ${ventas_r.llave_producto_pp} = ${agg_precio_promedio.llave} ;;
     relationship: many_to_one

@@ -20,10 +20,17 @@ view: cat_ciudad_distancia {
   dimension: id_ciudad {
     type: number
     sql: ${TABLE}.ID_CIUDAD ;;
+    primary_key: yes
   }
 
   measure: count {
     type: count
     drill_fields: []
+  }
+
+  measure: distancia_promedio {
+    type: average
+    value_format_name: decimal_2
+    sql: ${distancia_km} ;;
   }
 }
