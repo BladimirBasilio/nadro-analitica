@@ -20,6 +20,8 @@ explore: cat_cliente_ciudades {}
 
 explore: cat_ciudad_temperatura {}
 
+explore: tf_forecast {}
+
 explore: ventas_r {
   join: cat_planta {
     sql_on: ${ventas_r.plant} = ${cat_planta.id_sucursal} ;;
