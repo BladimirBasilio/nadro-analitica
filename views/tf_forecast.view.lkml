@@ -1,5 +1,5 @@
 view: tf_forecast {
-  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast`
+  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_2`
     ;;
 
   dimension: anio {
@@ -138,6 +138,11 @@ view: tf_forecast {
               WHEN ${mes} = 12 THEN 'DICIEMBRE' END;;
   }
 
+  dimension: dia {
+    type: number
+    sql: EXTRACT(DAYOFYEAR FROM ${fecha_date}) ;;
+  }
+
   dimension: precio_promedio {
     type: number
     sql: ${TABLE}.PRECIO_PROMEDIO ;;
@@ -170,7 +175,7 @@ view: tf_forecast {
 
   dimension: movimiento {
     type: string
-    sql: ${TABLE}.MOVIMIENTO ;;
+    sql: CASE WHEN ${TABLE}.MOVIMIENTO = 'VENTAS' THEN 'VENTA' ELSE ${TABLE}.MOVIMIENTO END ;;
   }
 
   # DIMENSIONES AGREGADAS DE CLIENTES
@@ -203,6 +208,15 @@ view: tf_forecast {
     sql: ${TABLE}.CIUDAD_CLIENTE ;;
   }
 
+  dimension: total_general {
+    type: number
+    sql: ${TABLE}.VENTA_UNIDADES + ${TABLE}.FORECAST ;;
+  }
+
+  dimension: origen {
+    type: number
+    sql: ${TABLE}.ORIGEN ;;
+  }
 
 
   # METRICAS
@@ -213,38 +227,44 @@ view: tf_forecast {
   }
 
   measure: temperatura_promedio {
+    group_label: "Modelo"
     type: average
-     value_format: "0.00 \"°C\""
-    sql: ${temperatura_media} ;;
+     value_format_name: decimal_1
+    sql:CASE WHEN ${origen} = "MODELO" THEN ${temperatura_media} END ;;
   }
 
   measure: total_unidades_real {
+    group_label: "Modelo"
     label: "Unidades Venta Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'VENTAS' THEN ${venta_unidades} ELSE NULL END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'VENTA' THEN ${venta_unidades} ELSE NULL END ;;
   }
 
   measure: dias_distinto_real {
+    group_label: "Modelo"
     type: count_distinct
-    sql: CASE WHEN ${venta_unidades} IS NOT NULL THEN ${fecha_date} END ;;
+    sql: CASE WHEN ${origen} = "MODELO" AND ${venta_unidades} IS NOT NULL THEN ${fecha_date} END ;;
   }
 
   measure: unidades_promedio_real {
+    group_label: "Modelo"
     label: "Promedio Venta Real"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
     sql: ${total_unidades_real}/${dias_distinto_real} ;;
   }
 
-  measure: promedio_venta {
-    label: "Promedio Venta Real ALT"
-    type: average
-    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: CASE WHEN ${movimiento} = 'VENTAS' THEN ${venta_unidades} END ;;
-  }
+  # measure: promedio_venta {
+  #   group_label: "Modelo"
+  #   label: "Promedio Venta Real ALT"
+  #   type: average
+  #   value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+  #   sql: CASE WHEN ${movimiento} = 'VENTA' THEN ${venta_unidades} END ;;
+  # }
 
   measure: unidades_promedio_mensual_real {
+    group_label: "Modelo"
     label: "Prommedio Venta Mensual Real"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
@@ -252,26 +272,30 @@ view: tf_forecast {
   }
 
   measure: distancia_promedio {
+    group_label: "Modelo"
     type: average
-    value_format: "0.00 \"Km\""
-    sql: ${distancia_cdis_sucursal} ;;
+    value_format_name: decimal_0
+    sql: CASE WHEN ${origen} = "MODELO" THEN ${distancia_cdis_sucursal} END ;;#
   }
 
   #FORECAST
 
   measure: total_predicho {
+    group_label: "Modelo"
     label: "Unidades Venta Predicho"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'VENTAS' THEN ${forecast} ELSE NULL END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'VENTA' THEN ${forecast} ELSE NULL END ;;
   }
 
   measure: dias_distinto_predicho {
+    group_label: "Modelo"
     type: count_distinct
-    sql: CASE WHEN ${forecast} IS NOT NULL THEN ${fecha_date} END ;;
+    sql: CASE WHEN ${origen} = "MODELO" AND ${forecast} IS NOT NULL THEN ${fecha_date} END ;;
   }
 
   measure: unidades_promedio_predicho {
+    group_label: "Modelo"
     label: "Promedio Venta Predicho"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
@@ -279,6 +303,7 @@ view: tf_forecast {
   }
 
   measure: unidades_promedio_mensual_predicho {
+    group_label: "Modelo"
     label: "Promedio Mensual Venta Predicho"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
@@ -286,116 +311,147 @@ view: tf_forecast {
   }
 
   measure: total_lower_bound {
+    group_label: "Modelo"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: ${lower_bound} ;;
+    sql: CASE WHEN ${origen} = "MODELO" THEN ${lower_bound} END ;;
   }
 
   #PENDIENTES
   measure: total_upper_bound {
+    group_label: "Modelo"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: ${upper_bound} ;;
+    sql: CASE WHEN ${origen} = "MODELO" THEN ${upper_bound} END;;
   }
 
   measure: sucursales {
+    group_label: "Modelo"
     type: count_distinct
-    sql: ${id_sucursal} ;;
+    sql:CASE WHEN ${origen} = "MODELO" THEN ${id_sucursal} END ;;
   }
 
   # METRICAS POR TIPO DE MOVIMIENTO
 
   measure: total_general_real {
+    group_label: "Modelo"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: ${venta_unidades} ;;
+    sql: CASE WHEN ${origen} = "MODELO" THEN ${venta_unidades} END;;
   }
 
   measure: total_general_real_predicho {
+    group_label: "Modelo"
     label: "Total General Real+Predicho"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: IFNULL(${venta_unidades},0)+IFNULL(${forecast},0) ;;
+    sql: CASE WHEN ${origen} = "MODELO" THEN IFNULL(${venta_unidades},0)+IFNULL(${forecast},0) END ;;
   }
 
   measure: porc_venta {
+    group_label: "Modelo"
     label: "Porcentaje Ventas"
     type: number
-    value_format_name: percent_2
+    value_format_name: percent_1
     sql: ${total_unidades_real}/${total_general_real} ;;
   }
 
   measure: total_descuento_real {
+    group_label: "Modelo"
     label: "Unidades Descuento Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'DESCUENTO' THEN ${venta_unidades} ELSE 0 END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'DESCUENTO' THEN ${venta_unidades} ELSE 0 END ;;
   }
 
   measure: porc_descuento {
+    group_label: "Modelo"
     label: "Porcentaje Descuento"
     type: number
-    value_format_name: percent_4
+    value_format_name: percent_1
     sql: ${total_descuento_real}/${total_general_real} ;;
   }
 
   measure: total_faltante_real {
+    group_label: "Modelo"
     label: "Unidades Faltante Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'FALTANTES' THEN ${venta_unidades} ELSE 0 END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'FALTANTES' THEN ${venta_unidades} ELSE 0 END ;;
   }
 
   measure: porc_faltante {
+    group_label: "Modelo"
     label: "Porcentaje Faltante"
     type: number
-    value_format_name: percent_4
+    value_format_name: percent_1
     sql: ${total_faltante_real}/${total_general_real} ;;
   }
 
   measure: total_devolucion_real {
+    group_label: "Modelo"
     label: "Unidades Devolucion Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'DEVOLUCION' THEN ${venta_unidades} ELSE 0 END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'DEVOLUCION' THEN ${venta_unidades} ELSE 0 END ;;
   }
 
   measure: porc_devolucion {
+    group_label: "Modelo"
     label: "Porcentaje Devolucion"
     type: number
-    value_format_name: percent_4
+    value_format_name: percent_1
     sql: ${total_devolucion_real}/${total_general_real} ;;
   }
 
   measure: total_cancelacion_real {
+    group_label: "Modelo"
     label: "Unidades Cancelación Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'CANCELACION' THEN ${venta_unidades} ELSE 0 END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'CANCELACION' THEN ${venta_unidades} ELSE 0 END ;;
   }
 
   measure: porc_cancelacion {
+    group_label: "Modelo"
     label: "Porcentaje Cancelación"
     type: number
-    value_format_name: percent_4
+    value_format_name: percent_1
     sql: ${total_cancelacion_real}/${total_general_real} ;;
   }
 
   measure: total_rechazo_real {
+    group_label: "Modelo"
     label: "Unidades Rechazo Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = 'RECHAZO' THEN ${venta_unidades} ELSE 0 END ;;
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'RECHAZO' THEN ${venta_unidades} ELSE 0 END ;;
   }
 
   measure: porc_rechazo {
+    group_label: "Modelo"
     label: "Porcentaje Rechazo"
     type: number
-    value_format_name: percent_4
+    value_format_name: percent_1
     sql: ${total_rechazo_real}/${total_general_real} ;;
   }
 
 
+  #ESTATICA PARA SERIE DE TIEMPO
+  measure: total_devoluciones_rp {
+    group_label: "Modelo"
+    label: "Devoluciones Real+Predict"
+    type: sum
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql: CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'DEVOLUCION' THEN IFNULL(${venta_unidades},0)+IFNULL(${forecast},0) END ;;
+  }
+
+  # measure: total_predicho_dev {
+  #   label: "Unidades Dev Predicho"
+  #   type: sum
+  #   value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+  #   sql:CASE WHEN ${movimiento} = 'DEVOLUCION' THEN ${forecast} ELSE NULL END ;;
+  # }
 
   # measure: promedio_descuento {
   #   label: "Promedio Descuento Real ALT"
@@ -416,7 +472,7 @@ view: tf_forecast {
 
   parameter: selector_movimiento {
     type: string
-    allowed_value: { value: "VENTAS" }
+    allowed_value: { value: "VENTA" }
     allowed_value: { value: "DESCUENTO" }
     allowed_value: { value: "FALTANTES" }
     allowed_value: { value: "DEVOLUCION" }
@@ -424,21 +480,25 @@ view: tf_forecast {
     allowed_value: { value: "RECHAZO" }
   }
 
-  # Metricas con parámetro
+  ########################################## Metricas con parámetro (MODELO)
+
   measure: total_dinamico_real {
+    group_label: "Modelo"
     label: "Unidades Dinamico Real"
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql:CASE WHEN ${movimiento} = {% parameter selector_movimiento %} THEN ${venta_unidades} ELSE 0 END ;;
-  }
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = {% parameter selector_movimiento %} THEN IFNULL(${venta_unidades},0)+IFNULL(${forecast},0) END;;
+  } #ELSE END
 
   measure: dias_distinto_real_dinamico {
+    group_label: "Modelo"
     type: count_distinct
-    sql: CASE WHEN ${venta_unidades} IS NOT NULL
-        AND ${movimiento} = {% parameter selector_movimiento %} THEN ${fecha_date} END ;;
+    sql: CASE WHEN ${origen} = "MODELO" AND  ${movimiento} = {% parameter selector_movimiento %} THEN ${fecha_date} END ;;
   }
+  #CASE ${venta_unidades} IS NOT NULL AND
 
   measure: promedio_dinamico {
+    group_label: "Modelo"
     label: "Promedio Dinamico Real "
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
@@ -446,9 +506,43 @@ view: tf_forecast {
   }
 
   measure: promedio_dinamico_mensual {
+    group_label: "Modelo"
     label: "Promedio mensual Dinamico Real "
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
     sql: ${promedio_dinamico}*30 ;;
+  }
+
+  ########################################################### INTEGRACIÓN DE HISTORICO
+
+  measure: total_dinamico_historico {
+    group_label: "Historico"
+    label: "Unidades Dinamico Historico"
+    type: sum
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql:CASE WHEN ${origen} = "HISTORICO" AND ${movimiento} = {% parameter selector_movimiento %} THEN IFNULL(${venta_unidades},0) END;;
+  } #ELSE END
+
+  measure: dias_distinto_historico_dinamico {
+    group_label: "Historico"
+    type: count_distinct
+    sql: CASE WHEN ${origen} = "HISTORICO" AND  ${movimiento} = {% parameter selector_movimiento %} THEN ${fecha_date} END ;;
+  }
+  #CASE ${venta_unidades} IS NOT NULL AND
+
+  measure: promedio_dinamico_historico {
+    group_label: "Historico"
+    label: "Promedio Dinamico Historico "
+    type: number
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql: ${total_dinamico_historico}/NULLIF(${dias_distinto_historico_dinamico},0) ;;
+  }
+
+  measure: h_promedio_dinamico_mensual {
+    label: "Promedio mensual Dinamico Historico "
+    group_label: "Historico"
+    type: number
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql: ${promedio_dinamico_historico}*30 ;;
   }
 }
