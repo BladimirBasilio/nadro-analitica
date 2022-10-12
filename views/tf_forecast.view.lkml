@@ -138,9 +138,14 @@ view: tf_forecast {
               WHEN ${mes} = 12 THEN 'DICIEMBRE' END;;
   }
 
-  dimension: dia {
+  dimension: numero_dia {
     type: number
     sql: EXTRACT(DAYOFYEAR FROM ${fecha_date}) ;;
+  }
+
+  dimension: numero_semana {
+    type: number
+    sql: EXTRACT(WEEK FROM ${fecha_date}) ;;
   }
 
   dimension: precio_promedio {
@@ -233,6 +238,23 @@ view: tf_forecast {
     sql:CASE WHEN ${origen} = "MODELO" THEN ${temperatura_media} END ;;
   }
 
+  parameter: periodo_promedio {
+    type: number
+    allowed_value: { value: "30" }
+
+    allowed_value: { value: "60" }
+
+    allowed_value: { value: "90" }
+
+    allowed_value: { value: "120" }
+
+    allowed_value: { value: "180" }
+
+    allowed_value: { value: "365" }
+
+    allowed_value: { value: "730" }
+  }
+
   measure: total_unidades_real {
     group_label: "Modelo"
     label: "Unidades Venta Real"
@@ -241,10 +263,18 @@ view: tf_forecast {
     sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'VENTA' THEN ${venta_unidades} ELSE NULL END ;;
   }
 
+  measure: total_unidades_real_alt {
+    group_label: "Modelo"
+    label: "Unidades Venta Real_ALT"
+    type: sum
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = 'VENTA' AND ${fecha_date} <= ('2022-08-31' - {% parameter periodo_promedio %}) THEN ${venta_unidades} ELSE NULL END ;;
+  }
+
   measure: dias_distinto_real {
     group_label: "Modelo"
     type: count_distinct
-    sql: CASE WHEN ${origen} = "MODELO" AND ${venta_unidades} IS NOT NULL THEN ${fecha_date} END ;;
+    sql: CASE WHEN ${origen} = "MODELO" AND ${venta_unidades} IS NOT NULL AND ${fecha_date} <= ('2022-08-31' - {% parameter periodo_promedio %}) THEN ${fecha_date} END ;;
   }
 
   measure: unidades_promedio_real {
@@ -252,7 +282,7 @@ view: tf_forecast {
     label: "Promedio Venta Real"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: ${total_unidades_real}/${dias_distinto_real} ;;
+    sql: ${total_unidades_real_alt}/${dias_distinto_real} ;;
   }
 
   # measure: promedio_venta {
@@ -268,7 +298,7 @@ view: tf_forecast {
     label: "Prommedio Venta Mensual Real"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: 30*(${total_unidades_real}/${dias_distinto_real}) ;;
+    sql: 30*(${total_unidades_real_alt}/${dias_distinto_real}) ;;
   }
 
   measure: distancia_promedio {
@@ -276,6 +306,13 @@ view: tf_forecast {
     type: average
     value_format_name: decimal_0
     sql: CASE WHEN ${origen} = "MODELO" THEN ${distancia_cdis_sucursal} END ;;#
+  }
+
+  measure: fact_tem_prom {
+    group_label: "Modelo"
+    type: average
+    value_format_name: percent_2
+    sql: CASE WHEN ${origen} = "MODELO" AND ${factor_temperatura} IS NOT NULL THEN ${factor_temperatura} END ;;
   }
 
   #FORECAST
@@ -544,5 +581,42 @@ view: tf_forecast {
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
     sql: ${promedio_dinamico_historico}*30 ;;
+  }
+
+  measure: h_promedio_dinamico_semanal {
+    label: "Promedio semanal Dinamico Historico "
+    group_label: "Historico"
+    type: number
+    value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
+    sql: ${promedio_dinamico_historico}*7 ;;
+  }
+
+  ##### PARAMETRO DE DIMENSIÓN DE FEHCA
+
+  parameter: selector_dimension_fecha {
+    type: unquoted
+    allowed_value: {
+      label: "Día"
+      value: "day"
+    }
+    allowed_value: {
+      label: "Mes"
+      value: "month"
+    }
+    allowed_value: {
+      label: "Semana"
+      value: "week"
+    }
+  }
+
+  dimension: dimension_fecha {
+    sql:
+    {% if selector_dimension_fecha._parameter_value == 'day' %}
+      ${fecha_date}
+    {% elsif selector_dimension_fecha._parameter_value == 'month' %}
+      ${fecha_month}
+    {% elsif selector_dimension_fecha._parameter_value == 'week' %}
+      ${fecha_week}
+    {% endif %};;
   }
 }
