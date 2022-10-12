@@ -311,7 +311,7 @@ view: tf_forecast {
   measure: fact_tem_prom {
     group_label: "Modelo"
     type: average
-    value_format_name: percent_2
+    value_format_name: decimal_2
     sql: CASE WHEN ${origen} = "MODELO" AND ${factor_temperatura} IS NOT NULL THEN ${factor_temperatura} END ;;
   }
 
@@ -439,6 +439,10 @@ view: tf_forecast {
     type: number
     value_format_name: percent_1
     sql: ${total_devolucion_real}/${total_general_real} ;;
+    link: {
+      label: "Detalle Devoluciones"
+            url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto={{_filters['tf_forecast.jerarquia_producto']}}&Desc+Producto={{_filters['tf_forecast.desc_producto']}}&Desc+Sucursal={{_filters['tf_forecast.desc_sucursal']}}&Fecha+Date={{_filters['tf_forecast.fecha_date']}}&Selector+Movimiento=DEVOLUCION&Estrategia+Producto={{_filters['tf_forecast.estrategia_producto']}}&Desc+Laboratorio={{_filters['tf_forecast.desc_laboratorio']}}&Grupo+Producto={{_filters['tf_forecast.grupo_producto']}}&Nombre+Cliente={{_filters['tf_forecast.nombre_cliente']}}"
+            }
   }
 
   measure: total_cancelacion_real {
@@ -455,6 +459,11 @@ view: tf_forecast {
     type: number
     value_format_name: percent_1
     sql: ${total_cancelacion_real}/${total_general_real} ;;
+    link: {
+      label: "Detalle Cancelación"
+      url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto=&Desc+Producto=&Desc+Sucursal=&Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Selector+Movimiento=CANCELACION&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto=&Nombre+Cliente="
+    }
+
   }
 
   measure: total_rechazo_real {
@@ -471,6 +480,10 @@ view: tf_forecast {
     type: number
     value_format_name: percent_1
     sql: ${total_rechazo_real}/${total_general_real} ;;
+    link: {
+      label: "Detalle Rechazo"
+      url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto=&Desc+Producto=&Desc+Sucursal=&Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Selector+Movimiento=RECHAZO&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto=&Nombre+Cliente="
+    }
   }
 
 
@@ -525,6 +538,7 @@ view: tf_forecast {
     type: sum
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
     sql:CASE WHEN ${origen} = "MODELO" AND ${movimiento} = {% parameter selector_movimiento %} THEN IFNULL(${venta_unidades},0)+IFNULL(${forecast},0) END;;
+
   } #ELSE END
 
   measure: dias_distinto_real_dinamico {
