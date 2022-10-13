@@ -1,5 +1,5 @@
 view: tf_forecast {
-  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_2`
+  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_3`
     ;;
 
   dimension: anio {
@@ -632,5 +632,73 @@ view: tf_forecast {
     {% elsif selector_dimension_fecha._parameter_value == 'week' %}
       ${fecha_week}
     {% endif %};;
+  }
+
+  #INFORMACIÓN DE MARKET SHARE
+
+  dimension: ms_nadro {
+    type: number
+    sql: ${TABLE}.MS_NADRO ;;
+  }
+
+  dimension: ms_mercado {
+    type: number
+    sql: ${TABLE}.MS_MERCADO ;;
+  }
+
+  dimension: ms_participacion {
+    type: number
+    sql: ${TABLE}.MS_PARTICIPACION ;;
+  }
+
+  measure: ms_nadro_avg {
+    label: "Nadro avg"
+    group_label: "Market Share"
+    value_format_name: decimal_0
+    type: average
+    sql: CASE WHEN ${origen} = 'HISTORICO' AND ${ms_nadro} IS NOT NULL THEN ${ms_nadro} END ;;
+  }
+
+  measure: ms_mercado_avg {
+    label: "Mercado avg"
+    group_label: "Market Share"
+    value_format_name: decimal_0
+    type: average
+    sql: CASE WHEN ${origen} = 'HISTORICO' AND ${ms_mercado} IS NOT NULL THEN ${ms_mercado} END ;;
+  }
+
+  measure: ms_participacion_avg {
+    label: "Participación avg"
+    group_label: "Market Share"
+    value_format: " 00.0 \"%\" "
+    type: average
+    sql: CASE WHEN ${origen} = 'HISTORICO' AND ${ms_participacion} IS NOT NULL THEN ${ms_participacion} END ;;
+  }
+
+  measure: ms_participacion_calculada {
+    label: "Participación calculada"
+    group_label: "Market Share"
+    value_format_name: percent_1
+    type: number
+    sql: ${ms_nadro_avg}/NULLIF(${ms_mercado_avg},0) ;;
+    link: {
+      label: "Market Share"
+      url: "https://trendit.cloud.looker.com/dashboards/57?Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Desc+Producto=&Jerarquia+Producto=&Desc+Sucursal=&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto="
+    }
+  }
+
+  measure: ms_piezas {
+    label: "Piezas "
+    group_label: "Market Share"
+    value_format_name: decimal_0
+    type: sum
+    sql:CASE WHEN ${origen} = 'HISTORICO' AND ${movimiento}='VENTA' AND ${ms_nadro} IS NOT NULL AND ${ms_nadro} != 0 THEN ${venta_unidades} END ;;
+  }
+
+  measure: participacion_sucursal {
+    group_label: "Market Share"
+    value_format_name: percent_2
+    type: number
+    sql: ${ms_piezas}/NULLIF(${ms_mercado_avg},0) ;;
   }
 }
