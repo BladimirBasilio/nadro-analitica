@@ -1,6 +1,6 @@
 view: tf_forecast {
-  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_3`
-    ;;
+  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_4` ;;
+
 
   dimension: anio {
     type: number
@@ -221,6 +221,20 @@ view: tf_forecast {
   dimension: origen {
     type: number
     sql: ${TABLE}.ORIGEN ;;
+  }
+
+  dimension: clasificacion_farma {
+    type: string
+    sql: CASE
+          WHEN ${grupo_producto} = 'FARMA PSICOTROP II' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'FARMA ESTUPEFACIENTE' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'FARMA PSICOTROP III' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'SERVICIOS CLIENTE' THEN 'NO FARMA'
+          WHEN ${grupo_producto} = 'FARMA SIN CLASIFICAR' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'FARMA ETICOS' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'NO FARMA SIN CLASIF.' THEN 'NO FARMA'
+          WHEN ${grupo_producto} = 'FARMA OTC-LIBRE VTA' THEN 'FARMA'
+          WHEN ${grupo_producto} = 'FARMA OTC-VENTA FCIA' THEN 'FARMA' END;;
   }
 
 
