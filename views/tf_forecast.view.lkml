@@ -1,5 +1,5 @@
 view: tf_forecast {
-  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_6` ;;
+  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_7` ;;
 
 
   dimension: anio {
