@@ -51,4 +51,16 @@ view: real_vs_predicho {
     type:  sum
     sql: ${predicho} ;;
   }
+
+  measure: per_real_predicho {
+    type: number
+    value_format_name: percent_2
+    sql: (${sum_real})/${sum_predicho} ;;
+  }
+
+  measure: per_predicho_real {
+    type: number
+    value_format_name: percent_2
+    sql: (${sum_predicho})/${sum_real} ;;
+  }
 }
