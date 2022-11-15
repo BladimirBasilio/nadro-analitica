@@ -1,5 +1,5 @@
 view: tf_forecast {
-  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_4` ;;
+  sql_table_name: `trend-it-nadro-data-lake.nadro_info_oro.tf_forecast_6` ;;
 
 
   dimension: anio {
@@ -138,6 +138,20 @@ view: tf_forecast {
               WHEN ${mes} = 12 THEN 'DICIEMBRE' END;;
   }
 
+  dimension: dia_semana_numero {
+    type: number
+    sql:
+    CASE WHEN ${dia_semana} = 'LUNES' THEN 2
+         WHEN ${dia_semana} = 'MARTES' THEN 3
+        WHEN ${dia_semana} = 'MIÉRCOLES' THEN 4
+        WHEN ${dia_semana} = 'JUEVES' THEN 5
+        WHEN ${dia_semana} = 'VIERNES' THEN 6
+        WHEN ${dia_semana} = 'SÁBADO' THEN 7
+        WHEN ${dia_semana} = 'DOMINGO' THEN 1
+    END
+    ;;
+  }
+
   dimension: numero_dia {
     type: number
     sql: EXTRACT(DAYOFYEAR FROM ${fecha_date}) ;;
@@ -219,7 +233,7 @@ view: tf_forecast {
   }
 
   dimension: origen {
-    type: number
+    type: string
     sql: ${TABLE}.ORIGEN ;;
   }
 
@@ -350,7 +364,7 @@ view: tf_forecast {
     label: "Promedio Venta Predicho"
     type: number
     value_format: "[>=1000000]#,##0.0,,\" M\";[>=1000]#,##0.0,\" K\";#,##0.0"
-    sql: ${total_predicho}/${dias_distinto_predicho} ;;
+    sql: ${total_predicho}/NULLIF(${dias_distinto_predicho},0) ;;
   }
 
   measure: unidades_promedio_mensual_predicho {
@@ -475,7 +489,7 @@ view: tf_forecast {
     sql: ${total_cancelacion_real}/${total_general_real} ;;
     link: {
       label: "Detalle Cancelación"
-      url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto=&Desc+Producto=&Desc+Sucursal=&Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Selector+Movimiento=CANCELACION&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto=&Nombre+Cliente="
+      url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto={{_filters['tf_forecast.jerarquia_producto']}}&Desc+Producto={{_filters['tf_forecast.desc_producto']}}&Desc+Sucursal={{_filters['tf_forecast.desc_sucursal']}}&Fecha+Date={{_filters['tf_forecast.fecha_date']}}&Selector+Movimiento=CANCELACION&Estrategia+Producto={{_filters['tf_forecast.estrategia_producto']}}&Desc+Laboratorio={{_filters['tf_forecast.desc_laboratorio']}}&Grupo+Producto={{_filters['tf_forecast.grupo_producto']}}&Nombre+Cliente={{_filters['tf_forecast.nombre_cliente']}}"
     }
 
   }
@@ -496,7 +510,7 @@ view: tf_forecast {
     sql: ${total_rechazo_real}/${total_general_real} ;;
     link: {
       label: "Detalle Rechazo"
-      url: "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto=&Desc+Producto=&Desc+Sucursal=&Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Selector+Movimiento=RECHAZO&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto=&Nombre+Cliente="
+      url:  "https://trendit.cloud.looker.com/dashboards/56?Jerarquia+Producto={{_filters['tf_forecast.jerarquia_producto']}}&Desc+Producto={{_filters['tf_forecast.desc_producto']}}&Desc+Sucursal={{_filters['tf_forecast.desc_sucursal']}}&Fecha+Date={{_filters['tf_forecast.fecha_date']}}&Selector+Movimiento=RECHAZO&Estrategia+Producto={{_filters['tf_forecast.estrategia_producto']}}&Desc+Laboratorio={{_filters['tf_forecast.desc_laboratorio']}}&Grupo+Producto={{_filters['tf_forecast.grupo_producto']}}&Nombre+Cliente={{_filters['tf_forecast.nombre_cliente']}}"
     }
   }
 
@@ -697,7 +711,7 @@ view: tf_forecast {
     sql: ${ms_nadro_avg}/NULLIF(${ms_mercado_avg},0) ;;
     link: {
       label: "Market Share"
-      url: "https://trendit.cloud.looker.com/dashboards/57?Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Desc+Producto=&Jerarquia+Producto=&Desc+Sucursal=&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto="
+      url: "https://trendit.cloud.looker.com/dashboards/57?Fecha+Date=2020%2F01%2F01+to+2022%2F10%2F30&Desc+Producto={{_filters['tf_forecast.desc_producto']}}&Jerarquia+Producto=&Desc+Sucursal=&Estrategia+Producto=&Desc+Laboratorio=&Grupo+Producto="
     }
   }
 
